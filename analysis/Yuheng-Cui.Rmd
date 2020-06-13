@@ -108,15 +108,21 @@ flights_NYtime <- flight %>%
          dest_tz = tz_lookup_coords(Dest_lat,
                                     Dest_lon,
                                     warn = FALSE)) %>%
-  mutate(DateTime = paste0(FlightDate, 
+  mutate(Dep_DateTime = paste0(FlightDate, 
                            " ",
                            substr(DepTime, 1, 2),":", 
                            substr(DepTime, 3, 4), ":00")) %>%
-  mutate(DateTime_NY = force_tzs(ymd_hms(DateTime),
-      tzones = origin_tz, tzone_out = "America/New_York"))
+  mutate(Origin_DateTime_NY = force_tzs(ymd_hms(Dep_DateTime),
+      tzones = origin_tz, tzone_out = "America/New_York")) %>% # Normalise Dep DateTime
+  mutate(Arr_DateTime = paste0(FlightDate,
+                               " ",
+                               substr(ArrTime, 1, 2),":", 
+                               substr(ArrTime, 3, 4), ":00")) %>%
+  mutate(Dest_DateTime_NY = force_tzs(ymd_hms(Arr_DateTime),
+      tzones = dest_tz, tzone_out = "America/New_York"))
 
 flights_NYtime %>%
-  select(DateTime_NY, Tail_Number, Origin, Dest) %>%
+  select(Origin_DateTime_NY, Dest_DateTime_NY, Tail_Number, Origin, Dest) %>%
   head()%>%
   kable(booktabs = TRUE, caption = "Flights-after normalise as NY Time")%>%
   kable_styling(bootstrap_options = c("striped", "hover"))
@@ -145,6 +151,11 @@ ggmap(usa_map) +
 
 
 ### c. 
+```{r animated fath way}
+
+```
+
+
 
 ### d. 
 
