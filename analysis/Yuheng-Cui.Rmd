@@ -17,6 +17,9 @@ library(tidyverse)
 library(DBI)
 library(ggmap)
 library(ggthemes)
+# for exercise 2
+library(lutz)
+library(lubridate)
 ```
 
 
@@ -54,13 +57,13 @@ airport_location <- d1 %>%
            AIRPORT_COUNTRY_CODE_ISO == "US") %>% 
   select(AIRPORT, DISPLAY_AIRPORT_NAME, LONGITUDE, LATITUDE)
 
-airport_with_log_lat <- airport %>%
+flight <- airport %>%
   left_join(airport_location, by = c("Origin" = "AIRPORT")) %>%
   rename("Origin_lon" = "LONGITUDE","Origin_lat" = "LATITUDE") %>% # rename origin airport longitude and latitude
   left_join(airport_location, by = c("Dest" = "AIRPORT")) %>%
   rename("Dest_lon" = "LONGITUDE","Dest_lat" = "LATITUDE") # rename dest airport longitude and latitude
 
-save(airport_with_log_lat,file = here::here("data","airports_with_lon_lat.rda"))
+save(flight,file = here::here("data","flights.rda"))
 ```
 
 
@@ -77,13 +80,13 @@ usa_map <- get_map(location = usa_bbox, source = "osm")
 
 
 ```{r flight path}
-ggmap(usa_map) + geom_segment(data=airport_with_log_lat, 
+ggmap(usa_map) + geom_segment(data=flight, 
                      aes(x=Origin_lon, 
                          xend=Dest_lon,
                          y=Origin_lat,
                          yend=Dest_lat), 
                      colour="#9651A0", alpha=0.01) +
-  geom_point(data=airport_with_log_lat, aes(x=Origin_lon, Origin_lat),
+  geom_point(data=flight, aes(x=Origin_lon, Origin_lat),
              colour="#746FB2", alpha=0.1, size=1) +
   theme_map()
 ```
@@ -93,6 +96,26 @@ ggmap(usa_map) + geom_segment(data=airport_with_log_lat,
 ## `r emo::ji("airplane")` Exercise 2
 
 ### a. 
+```{r standardise timezone}
+flights_NYtime <- flight %>%
+  filter(!is.na(Origin_lon)) %>%
+  filter(!is.na(Dest_lon)) %>%
+  filter(!is.na(DepTime)) %>%
+  mutate(origin_tz = tz_lookup_coords(Origin_lat,
+                                      Origin_lon, 
+                                      warn = FALSE),
+         dest_tz = tz_lookup_coords(Dest_lat,
+                                    Dest_lon,
+                                    warn = FALSE)) %>%
+  mutate(DateTime = paste0(FlightDate, 
+                           " ",
+                           substr(DepTime, 1, 2),":", 
+                           substr(DepTime, 3, 4), ":00")) %>%
+  mutate(DateTime_NY = force_tzs(ymd_hms(DateTime),
+      tzones = origin_tz, tzone_out = "America/New_York"))
+```
+
+
 
 ### b. 
 
