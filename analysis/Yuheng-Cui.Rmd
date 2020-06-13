@@ -15,7 +15,8 @@ knitr::opts_chunk$set(echo = FALSE,
                       warning=FALSE)
 library(tidyverse)
 library(DBI)
-
+library(ggmap)
+library(ggthemes)
 ```
 
 
@@ -32,21 +33,37 @@ ca <- d %>%
 save(ca, file = here::here("data","airlines.rda"))
 ```
 
-```{r choose one origin_airport}
-origin_airport <- d %>%
-  filter(Origin == "ATL")
-save(origin_airport, file = here::here("data","origin_airport.rda"))
+```{r choose one airport}
+airport <- d %>%
+  filter(Origin == "ATL" | Dest == "ATL")
+save(airport, file = here::here("data","airport_ATL.rda"))
 ```
 
-```{r choose one dest_airport}
-dest_airport <- d %>%
-  filter(Dest == "ATL")
-save(dest_airport, file = here::here("data","dest_airport.rda"))
-```
 
 Paragraph...
 
 ### b. 
+```{r read airport data}
+d1 <- read_csv(here::here("raw_data","516691980_T_MASTER_CORD.csv"))
+```
+
+```{r join d1 into airport}
+airport_location <- d1 %>%
+  filter(AIRPORT_IS_CLOSED == 0 & # select the airports are still on businesses at the time
+           AIRPORT_IS_LATEST == 1 &
+           AIRPORT_COUNTRY_CODE_ISO == "US") %>% 
+  select(AIRPORT, DISPLAY_AIRPORT_NAME, LONGITUDE, LATITUDE)
+
+airport_with_log_lat <- airport %>%
+  left_join(airport_location, by = c("Origin" = "AIRPORT")) %>%
+  rename("Origin_lon" = "LONGITUDE","Origin_lat" = "LATITUDE") %>% # rename origin airport longitude and latitude
+  left_join(airport_location, by = c("Dest" = "AIRPORT")) %>%
+  rename("Dest_lon" = "LONGITUDE","Dest_lat" = "LATITUDE") # rename dest airport longitude and latitude
+
+save(airport_with_log_lat,file = here::here("data","airports_with_lon_lat.rda"))
+```
+
+
 
 ### c. 
 
