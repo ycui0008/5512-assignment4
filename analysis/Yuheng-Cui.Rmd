@@ -66,6 +66,29 @@ save(airport_with_log_lat,file = here::here("data","airports_with_lon_lat.rda"))
 
 
 ### c. 
+```{r generate a map of US}
+usa_bbox <- c(-130, # min long
+              20, # min lat
+              -60, # max long
+              55) # max lat
+
+usa_map <- get_map(location = usa_bbox, source = "osm")
+```
+
+
+```{r flight path}
+ggmap(usa_map) + geom_segment(data=airport_with_log_lat, 
+                     aes(x=Origin_lon, 
+                         xend=Dest_lon,
+                         y=Origin_lat,
+                         yend=Dest_lat), 
+                     colour="#9651A0", alpha=0.01) +
+  geom_point(data=airport_with_log_lat, aes(x=Origin_lon, Origin_lat),
+             colour="#746FB2", alpha=0.1, size=1) +
+  theme_map()
+```
+
+
 
 ## `r emo::ji("airplane")` Exercise 2
 
