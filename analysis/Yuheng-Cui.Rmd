@@ -1,0 +1,57 @@
+---
+title: "ETC5512 Assignment 4: An Analysis of US Air Traffic"
+subtitle: "Name of your airport"
+author: "Firstname Lastname"
+date: "June 19,  2020"
+output: 
+  html_document:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, 
+                      cache=TRUE, 
+                      messages=FALSE, 
+                      warning=FALSE)
+library(tidyverse)
+```
+
+
+## `r emo::ji("airplane")` Exercise 1
+
+### a. 
+
+### b. 
+
+### c. 
+
+## `r emo::ji("airplane")` Exercise 2
+
+### a. 
+
+### b. 
+
+### c. 
+
+### d. 
+
+### e. 
+
+Here is one way to make an animation.
+
+```{r, animation.hook='gifski', out.width="100%", fig.width=4, fig.height=2}
+d <- tibble(koala=1:10, kangaroo=1:10)
+for (i in 1:10){
+  print(ggplot(data=d, aes(x=koala, y=kangaroo)) +
+    geom_point(alpha=0.1) +
+    geom_point(data=d[i,], colour="red"))
+}
+```
+
+## `r emo::ji("airplane")` Exercise 3
+
+## `r emo::ji("airplane")` Exercise 4
+
+## References
+
+Cite  the main sources for your work, including R packages used.
