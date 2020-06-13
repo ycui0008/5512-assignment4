@@ -20,6 +20,7 @@ library(ggthemes)
 # for exercise 2
 library(lutz)
 library(lubridate)
+library(kableExtra)
 ```
 
 
@@ -113,11 +114,35 @@ flights_NYtime <- flight %>%
                            substr(DepTime, 3, 4), ":00")) %>%
   mutate(DateTime_NY = force_tzs(ymd_hms(DateTime),
       tzones = origin_tz, tzone_out = "America/New_York"))
+
+flights_NYtime %>%
+  select(DateTime_NY, Tail_Number, Origin, Dest) %>%
+  head()%>%
+  kable(booktabs = TRUE, caption = "Flights-after normalise as NY Time")%>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
 ```
 
 
 
 ### b. 
+```{r a day and one plane}
+# Select a plane whose tail number was N7823A
+day1 <- flights_NYtime %>%
+  filter(Tail_Number == "N7823A", DayofMonth == 24)
+
+ggmap(usa_map) +
+  geom_segment(data=day1, 
+                     aes(x=Origin_lon, 
+                         xend=Dest_lon,
+                         y=Origin_lat,
+                         yend=Dest_lat), 
+                     colour="Red", size = 1) +
+  geom_point(data=day1, aes(x=Origin_lon, Origin_lat),
+             colour="#746FB2", size=2) +
+  theme_map()
+```
+
+
 
 ### c. 
 
