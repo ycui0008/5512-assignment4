@@ -21,6 +21,7 @@ library(ggthemes)
 library(lutz)
 library(lubridate)
 library(kableExtra)
+library(janitor)
 ```
 
 
@@ -146,18 +147,55 @@ ggmap(usa_map) +
   geom_point(data=day1, aes(x=Origin_lon, Origin_lat),
              colour="#746FB2", size=2) +
   theme_map()
+
 ```
 
 
 
 ### c. 
 ```{r animated fath way}
+p1 <- day1 %>%
+  mutate(AirTime_inter = AirTime/15) %>%
+  select(Origin_lon, Origin_lat, Dest_lon, Dest_lat, Dep_DateTime, AirTime_inter)
+p1
+```
+
+```{r calculate the }
+p2 <-p1 %>%
+  mutate(lon_inter = Dest_lon - Origin_lon,
+         lat_inter = Dest_lat - Origin_lat) %>%
+  mutate(lon_incre = lon_inter/AirTime_inter,
+         lat_incre = lat_inter/AirTime_inter)
+p2
+```
+
+```{r generate sequences}
+lon_1 <- as.tibble(seq(p2$Origin_lon[1], p2$Dest_lon[1], by = p2$lon_incre[1]))
+lat_1 <- as.tibble(seq(p2$Origin_lat[1], p2$Dest_lat[1], by = p2$lat_incre[1]))
+tibble1 <-bind_cols(lon_1,lat_1) %>% clean_names()
+
+lon_2 <- as.tibble(seq(p2$Origin_lon[2], p2$Dest_lon[2], by = p2$lon_incre[2]))
+lat_2 <- as.tibble(seq(p2$Origin_lat[2], p2$Dest_lat[2], by = p2$lat_incre[2]))
+tibble2 <-bind_cols(lon_2,lat_2) %>% clean_names()
+```
+
+```{r plot the break down point}
+ggmap(usa_map) +
+  geom_point(data=day1, aes(x=Origin_lon, Origin_lat),
+             colour="Red", size=2) +
+  geom_point(data = tibble1, aes(x = value_1,
+                                 y = value_2)) +
+  geom_point(data = tibble2, aes(x = value_1,
+                                 y = value_2))
+```
+
+
+### d. 
+```{r}
 
 ```
 
 
-
-### d. 
 
 ### e. 
 
