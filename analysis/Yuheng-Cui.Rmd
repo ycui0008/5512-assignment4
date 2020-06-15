@@ -22,6 +22,7 @@ library(lutz)
 library(lubridate)
 library(kableExtra)
 library(janitor)
+library(viridis)
 ```
 
 
@@ -156,8 +157,11 @@ ggmap(usa_map) +
 ```{r animated fath way}
 p1 <- day1 %>%
   mutate(AirTime_inter = AirTime/15) %>%
-  select(Origin_lon, Origin_lat, Dest_lon, Dest_lat, Dep_DateTime, AirTime_inter)
-p1
+  mutate(Arr_DateTime = paste0(FlightDate, 
+                           " ",
+                           substr(ArrTime, 1, 2),":", 
+                           substr(ArrTime, 3, 4), ":00"))%>%
+  select(Origin_lon, Origin_lat, Dest_lon, Dest_lat, Dep_DateTime, Arr_DateTime, AirTime_inter)
 ```
 
 ```{r calculate the }
@@ -165,34 +169,66 @@ p2 <-p1 %>%
   mutate(lon_inter = Dest_lon - Origin_lon,
          lat_inter = Dest_lat - Origin_lat) %>%
   mutate(lon_incre = lon_inter/AirTime_inter,
-         lat_incre = lat_inter/AirTime_inter)
-p2
+         lat_incre = lat_inter/AirTime_inter) %>%
+  mutate(Dep_DateTime = ymd_hms(Dep_DateTime)) %>%
+  arrange(Dep_DateTime)
+
+```
+
+```{r}
+step <- hms("00:15:00") # The time interval is 15 mins
+
+p3 <- p2 %>%
+  select(Origin_lon, Origin_lat, Dep_DateTime) %>%
+  mutate(Dep_DateTime = ymd_hms(Dep_DateTime))
 ```
 
 ```{r generate sequences}
 lon_1 <- as.tibble(seq(p2$Origin_lon[1], p2$Dest_lon[1], by = p2$lon_incre[1]))
 lat_1 <- as.tibble(seq(p2$Origin_lat[1], p2$Dest_lat[1], by = p2$lat_incre[1]))
-tibble1 <-bind_cols(lon_1,lat_1) %>% clean_names()
+tibble1 <-bind_cols(lon_1,lat_1) %>% clean_names() %>%
+  rename(Origin_lon = value_1, Origin_lat = value_2)
+
 
 lon_2 <- as.tibble(seq(p2$Origin_lon[2], p2$Dest_lon[2], by = p2$lon_incre[2]))
 lat_2 <- as.tibble(seq(p2$Origin_lat[2], p2$Dest_lat[2], by = p2$lat_incre[2]))
-tibble2 <-bind_cols(lon_2,lat_2) %>% clean_names()
+tibble2 <-bind_cols(lon_2,lat_2) %>% clean_names() %>%
+  rename(Origin_lon = value_1, Origin_lat = value_2)
+
+path <- bind_rows(p3[1,][1:2],tibble1,p3[1,][1:2],tibble2) #The movement of airplane
+
+path$id <- seq.int(nrow(path))  
 ```
 
-```{r plot the break down point}
-ggmap(usa_map) +
-  geom_point(data=day1, aes(x=Origin_lon, Origin_lat),
-             colour="Red", size=2) +
-  geom_point(data = tibble1, aes(x = value_1,
-                                 y = value_2)) +
-  geom_point(data = tibble2, aes(x = value_1,
-                                 y = value_2))
+```{r}
+ggmap(usa_map)+
+          geom_point(data=day1, 
+                     aes(x=Origin_lon, 
+                         y=Origin_lat), 
+                     colour="Red", size = 1) +
+          geom_point(data = path, aes(x = Origin_lon, y = Origin_lat, color = id)) +
+          scale_color_viridis_c() +
+  theme_map()
 ```
+
+
+
+
+
 
 
 ### d. 
-```{r}
-
+```{r, animation.hook='gifski', out.width="100%", fig.width=4, fig.height=2}
+for (i in 1:nrow(path)){
+  print(ggmap(usa_map)+
+          geom_point(data=day1, 
+                     aes(x=Origin_lon, 
+                         y=Origin_lat), 
+                     colour="Red", size = 1) +
+          geom_point(data = path, aes(x = path[[1]][i], y = path[[2]][i],color = id)) +
+          scale_color_viridis_c() +
+  theme_map())
+}
 ```
 
 
