@@ -133,7 +133,16 @@ flights_NYtime %>%
 
 
 ### b. 
-```{r a day and one plane}
+```{r list of plane}
+# the list of planes that has flown in and out of the selected airport
+flights_NYtime %>%
+  group_by(Tail_Number, DayofMonth) %>%
+  tally() %>%
+  filter(n == 2) %>%
+  select(Tail_Number, DayofMonth)
+```
+
+```{r choose one plane from the list above}
 # Select a plane whose tail number was N7823A
 day1 <- flights_NYtime %>%
   filter(Tail_Number == "N7823A", DayofMonth == 24)
@@ -164,7 +173,7 @@ p1 <- day1 %>%
   select(Origin_lon, Origin_lat, Dest_lon, Dest_lat, Dep_DateTime, Arr_DateTime, AirTime_inter)
 ```
 
-```{r calculate the }
+```{r calculate the intervals}
 p2 <-p1 %>%
   mutate(lon_inter = Dest_lon - Origin_lon,
          lat_inter = Dest_lat - Origin_lat) %>%
@@ -195,12 +204,12 @@ lat_2 <- as.tibble(seq(p2$Origin_lat[2], p2$Dest_lat[2], by = p2$lat_incre[2]))
 tibble2 <-bind_cols(lon_2,lat_2) %>% clean_names() %>%
   rename(Origin_lon = value_1, Origin_lat = value_2)
 
-path <- bind_rows(p3[1,][1:2],tibble1,p3[1,][1:2],tibble2) #The movement of airplane
+path <- bind_rows(p3[1,][1:2], tibble1, tibble2) #The movement of airplane
 
 path$id <- seq.int(nrow(path))  
 ```
 
-```{r}
+```{r one plane one path}
 ggmap(usa_map)+
           geom_point(data=day1, 
                      aes(x=Origin_lon, 
@@ -218,15 +227,14 @@ ggmap(usa_map)+
 
 
 ### d. 
-```{r, animation.hook='gifski', out.width="100%", fig.width=4, fig.height=2}
+```{r one plane, animation.hook='gifski', out.width="100%", fig.width=4, fig.height=2}
 for (i in 1:nrow(path)){
   print(ggmap(usa_map)+
           geom_point(data=day1, 
                      aes(x=Origin_lon, 
                          y=Origin_lat), 
                      colour="Red", size = 1) +
-          geom_point(data = path, aes(x = path[[1]][i], y = path[[2]][i],color = id)) +
-          scale_color_viridis_c() +
+          geom_point(data = path, aes(x = path[[1]][i], y = path[[2]][i]),color = 'White') +
   theme_map())
 }
 ```
@@ -247,6 +255,72 @@ for (i in 1:10){
 ```
 
 ## `r emo::ji("airplane")` Exercise 3
+```{r load nycflights13 package}
+library(nycflights13)
+names(nycflights13::flights)
+```
+
+```{r new data flights}
+new_d <-d %>%
+  select(Year, Month, DayofMonth, DepTime, CRSDepTime, DepDelay, ArrTime, CRSArrTime, ArrDelay, Reporting_Airline, Flight_Number_Reporting_Airline, Tail_Number, Origin, Dest, AirTime, Distance) %>%
+  rename(Day = DayofMonth, sched_dep_time = CRSDepTime, sched_arr_time = CRSArrTime, Carrier = Reporting_Airline, Flight = Flight_Number_Reporting_Airline) %>%
+  mutate(hour = substr(sched_dep_time,1,2), 
+         minute = substr(sched_dep_time, 3, 4)) %>%
+  mutate(time_hour = paste0(Year, "-", Month, "-", Day, 
+                            " ",
+                            hour, ":", minute)) %>%
+  mutate(time_hour = as_datetime(time_hour, format = "%Y-%m-%d %H:%M")) %>%
+  mutate(Year = as.integer(Year),
+         Month = as.integer(Month),
+         Day = as.integer(Day),
+         DepTime = as.integer(DepTime),
+         sched_dep_time = as.integer(sched_dep_time),
+         ArrTime = as.integer(ArrTime),
+         sched_arr_time = as.integer(sched_arr_time),
+         Flight = as.integer(Flight),
+         hour = as.double(hour),
+         minute = as.double(minute)) %>%
+  filter(Origin == "ATL" | Dest == "ATL")
+
+save(new_d, file = here::here("data","ATL_feb_allcarriers.rda"))
+```
+
+```{r new data airlines}
+# Download raw data
+url_airlines <- ("https://raw.githubusercontent.com/jpatokal/openflights/master/data/airlines.dat")
+download.file(url_airlines, destfile = here::here("raw_data","airlines.csv"))
+
+# Read data and add col names
+new_airlines <- read_csv(here::here("raw_data","airlines.csv"), col_names = c("Airline ID", "Name", "Alias", "IATA", "ICAO", "Callsign", "Country", "Active")) %>%
+  clean_names() %>% 
+  filter(country == "United States", active =="Y")
+  
+new_airlines <- new_airlines %>%
+  select(iata, name) %>%
+  rename(carrier = iata)
+
+save(new_airlines, file = here::here("data","my_airlines.rda"))
+```
+
+```{r new data airport}
+# Download raw data
+url_airport <- ("https://raw.githubusercontent.com/jpatokal/openflights/master/data/airports.dat") 
+download.file(url_airport, destfile = here::here("raw_data","airports.csv"))
+
+# Read data and add col names
+new_airport <- read_csv(here::here("raw_data","airports.csv"), col_names = c("Airport ID", "Name", "City", "Country", "IATA", "ICAO", "Latitude", "Longitude", "Altitude", "Timezone", "DST", "Tz database time zone", "Type", "Source")) %>% 
+  clean_names() %>%
+  filter(country == "United States")
+
+new_airport <- new_airport %>%
+  select(iata, name, latitude, longitude, altitude, timezone, dst, tz_database_time_zone) %>%
+  rename(faa = iata, lat = latitude, lon = longitude, alt = altitude, tz = timezone, tzone = tz_database_time_zone)
+
+save(new_airport, file = here::here("data","airports.rda"))
+```
+
+
+
 
 ## `r emo::ji("airplane")` Exercise 4
 
