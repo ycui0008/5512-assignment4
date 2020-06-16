@@ -271,10 +271,6 @@ for (i in 1:10){
 ```
 
 ## `r emo::ji("airplane")` Exercise 3
-```{r load nycflights13 package}
-library(nycflights13)
-names(nycflights13::flights)
-```
 
 ```{r new data flights}
 new_d <-read_csv(here::here("raw_data","On_Time_Reporting_Carrier_On_Time_Performance_(1987_present)_2020_2.csv")) %>%
@@ -298,7 +294,7 @@ new_d <-read_csv(here::here("raw_data","On_Time_Reporting_Carrier_On_Time_Perfor
          minute = as.double(minute)) %>%
   filter(Origin == "ATL" | Dest == "ATL")
 
-save(new_d, file = here::here("data","ATL_feb_allcarriers.rda"))
+save(new_d, file = here::here("data","my_flights.rda"))
 ```
 
 ```{r new data airlines}
@@ -330,9 +326,10 @@ new_airport <- read_csv(here::here("raw_data","airports.csv"), col_names = c("Ai
 
 new_airport <- new_airport %>%
   select(iata, name, latitude, longitude, altitude, timezone, dst, tz_database_time_zone) %>%
-  rename(faa = iata, lat = latitude, lon = longitude, alt = altitude, tz = timezone, tzone = tz_database_time_zone)
+  rename(faa = iata, lat = latitude, lon = longitude, alt = altitude, tz = timezone, tzone = tz_database_time_zone) %>%
+  mutate(dst = parse_character(dst))
 
-save(new_airport, file = here::here("data","airports.rda"))
+save(new_airport, file = here::here("data","my_airports.rda"))
 ```
 
 ```{r new data planes}
@@ -397,8 +394,50 @@ save(my_planes, file = here::here("data","my_planes.rda"))
 ```
 
 
-```{r }
+```{r read weather data}
+raw_weather <- read_csv(here::here("raw_data","asos_ATL.txt"))
+```
 
+```{r my weather data}
+my_weather <- raw_weather %>%
+  select(station, valid, tmpf, dwpf, relh, drct, sknt, p01i, alti, vsby, gust) %>%
+  mutate(year = year(valid),
+         month = month(valid),
+         day = day(valid),
+         hour = hour(valid)) %>%
+  rename(origin = station,
+         time_hour = valid,
+         temp = tmpf,
+         humid = relh,
+         wind_dir = drct,
+         dewp = dwpf,
+         wind_speed = sknt,
+         precip = p01i,
+         pressure = alti,
+         visib = vsby,
+         wind_gust = gust) %>%
+  select(origin, year, month, day, hour, temp, dewp, humid, wind_dir, wind_speed, wind_gust, precip, pressure, visib, time_hour) %>%
+  mutate(year = as.integer(year),
+         month = as.integer(month),
+         temp = as.double(temp),
+         dewp = as.double(dewp),
+         humid = as.double(humid),
+         wind_dir = as.double(wind_dir),
+         wind_speed = as.double(wind_speed),
+         wind_gust = as.double(wind_gust),
+         precip = as.double(precip))
+
+save(my_weather, file = here::here("data", "my_weather.rda"))
+```
+
+
+```{r load packages}
+library(polite)
+library(rvest)
+```
+
+```{r}
+url_city
 ```
 
 
