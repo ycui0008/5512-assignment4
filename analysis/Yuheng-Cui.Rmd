@@ -184,6 +184,7 @@ p2 <-p1 %>%
   mutate(Dep_DateTime = ymd_hms(Dep_DateTime)) %>%
   arrange(Dep_DateTime)
 
+p2
 ```
 
 ```{r}
@@ -248,6 +249,15 @@ for (i in 1:nrow(path)){
 
 
 ### e. 
+
+```{r}
+flights_NYtime %>%
+  filter(DayofMonth == 24, Reporting_Airline)
+```
+
+
+
+
 
 Here is one way to make an animation.
 
@@ -326,7 +336,56 @@ save(new_airport, file = here::here("data","airports.rda"))
 ```
 
 ```{r new data planes}
+raw_planes <- read_csv(here::here("raw_data/ReleasableAircraft/MASTER.TXT")) %>% clean_names()
+raw_engine <- read_csv(here::here("raw_data/ReleasableAircraft/ENGINE.TXT")) %>% clean_names()
+raw_acf <- read_csv(here::here("raw_data/ReleasableAircraft/ACFTREF.TXT")) %>% clean_names()
+```
 
+```{r ducumentation}
+# Find out the Descriptions for type engine and type aircraft
+# Create table for Type Engine
+type_engine <- tibble(type = c(0:11), engine_desc = c("None","Reciprocating", "Turbo-prop", "Turbo-shaft","Turbo-jet","Turbo-fan","Ramjet","2 Cycle","4 Cycle","Unknown","Electric","Rotary"))
+
+# Create table for Type Aircraft
+type_aircraft <- tibble(type = c(1:9,"H","O"), aircraft_desc = c("Glider","Balloon",
+"Blimp/Dirigible",
+"Fixed wing single engine",
+"Fixed wing multi engine",
+"Rotorcraft",
+"Weight-shift-control",
+"Powered Parachute",
+"Gyroplane",
+"Hybrid Lift",
+"Other"))
+```
+
+```{r join tables into one}
+# Join plane, engine, acf, type engine and type aircraft tables
+raw_planes %>%
+  left_join(raw_engine, by = c("eng_mfr_mdl" = "code")) %>%
+  left_join(type_engine, by = "type") %>%
+  left_join(raw_acf, by = c("mfr_mdl_code" = "code")) %>%
+  mutate(type_acft = as.character(type_acft)) %>%
+  left_join(type_aircraft, by = c("type_acft" = "type")) %>%
+  clean_names() %>%
+  select(n_number, # tailenum
+         year_mfr,# year
+         aircraft_desc, # type
+         mfr_y, # manufacturer
+         model_y, # model
+         type, #engines in numeric
+         no_seats, #seats
+         speed, #speed
+         engine_desc) %>% #engine in char
+  # Rename col names
+  rename(tailnum = n_number,
+         year = year_mfr,
+         type = aircraft_desc,
+         manufacturer = mfr_y,
+         model = model_y,
+         engines = type,
+         seats = no_seats,
+         engine = engine_desc)
 ```
 
 
