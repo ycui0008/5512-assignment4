@@ -154,8 +154,10 @@ ggmap(usa_map) +
                          y=Origin_lat,
                          yend=Dest_lat), 
                      colour="Red", size = 1) +
-  geom_point(data=day1, aes(x=Origin_lon, Origin_lat),
+  geom_point(data=day1, aes(x=Origin_lon, y = Origin_lat),
              colour="#746FB2", size=2) +
+  geom_point(data=day1, aes(x=Dest_lon, y = Dest_lat),
+             colour="#746FB2", size=2)
   theme_map()
 
 ```
@@ -211,12 +213,16 @@ path$id <- seq.int(nrow(path))
 
 ```{r one plane one path}
 ggmap(usa_map)+
-          geom_point(data=day1, 
-                     aes(x=Origin_lon, 
-                         y=Origin_lat), 
-                     colour="Red", size = 1) +
-          geom_point(data = path, aes(x = Origin_lon, y = Origin_lat, color = id)) +
+  geom_point(data=day1, 
+             aes(x=Origin_lon, 
+                 y=Origin_lat), 
+             colour="Red", size = 1) +
+  geom_point(data = path, aes(x = Origin_lon, y = Origin_lat, color = id)) +
           scale_color_viridis_c() +
+  geom_point(data=day1, aes(x=Origin_lon, y = Origin_lat),
+             colour="#746FB2", size=2) +
+  geom_point(data=day1, aes(x=Dest_lon, y = Dest_lat),
+             colour="#746FB2", size=2)+
   theme_map()
 ```
 
@@ -230,10 +236,10 @@ ggmap(usa_map)+
 ```{r one plane, animation.hook='gifski', out.width="100%", fig.width=4, fig.height=2}
 for (i in 1:nrow(path)){
   print(ggmap(usa_map)+
-          geom_point(data=day1, 
-                     aes(x=Origin_lon, 
-                         y=Origin_lat), 
-                     colour="Red", size = 1) +
+          geom_point(data=day1, aes(x=Origin_lon, y = Origin_lat),
+             colour="Red", size=2) +
+          geom_point(data=day1, aes(x=Dest_lon, y = Dest_lat),
+             colour="Red", size=2) +
           geom_point(data = path, aes(x = path[[1]][i], y = path[[2]][i]),color = 'White') +
   theme_map())
 }
@@ -261,7 +267,7 @@ names(nycflights13::flights)
 ```
 
 ```{r new data flights}
-new_d <-d %>%
+new_d <-read_csv(here::here("raw_data","On_Time_Reporting_Carrier_On_Time_Performance_(1987_present)_2020_2.csv")) %>%
   select(Year, Month, DayofMonth, DepTime, CRSDepTime, DepDelay, ArrTime, CRSArrTime, ArrDelay, Reporting_Airline, Flight_Number_Reporting_Airline, Tail_Number, Origin, Dest, AirTime, Distance) %>%
   rename(Day = DayofMonth, sched_dep_time = CRSDepTime, sched_arr_time = CRSArrTime, Carrier = Reporting_Airline, Flight = Flight_Number_Reporting_Airline) %>%
   mutate(hour = substr(sched_dep_time,1,2), 
@@ -319,6 +325,9 @@ new_airport <- new_airport %>%
 save(new_airport, file = here::here("data","airports.rda"))
 ```
 
+```{r new data planes}
+
+```
 
 
 
