@@ -1,161 +1,196 @@
 5512-assignment4
 
+The code is in Yuheng_Cui.Rmd located in analysis folder.
+
 Exercise 1 and 3 both requires save data sets in rda format, to differentiate the files saved for different exercises, all rda files in Exercise 3 are named after my_, for example, my_flights.rda.
 
 
 my_flights.rda
-- Description
+- Description:
   On-time data for all flights that departed/arrived ATL in February 2019.
-- Format
+- Format:
 	Data frame with columns
 	
-	year, month, day
+	year, month, day:
 		Date of departure.
 
-	dep_time, arr_time
+	dep_time, arr_time:
 		Actual departure and arrival times (format HHMM or HMM), local tz.
 
-	sched_dep_time, sched_arr_time
+	sched_dep_time, sched_arr_time:
 		Scheduled departure and arrival times (format HHMM or HMM), local tz.
 
-	dep_delay, arr_delay
+	dep_delay, arr_delay:
 		Departure and arrival delays, in minutes. Negative times represent early departures/arrivals.
 
-	carrier
+	carrier:
 		Two letter carrier abbreviation. See airlines to get name.
 
-	flight
+	flight:
 		Flight number.
 
-	tailnum
+	tailnum:
 		Plane tail number. See planes for additional metadata.
 
-	origin, dest
+	origin, dest:
 		Origin and destination. See airports for additional metadata.
 
-	air_time
+	air_time:
 		Amount of time spent in the air, in minutes.
 
-	distance
+	distance:
 		Distance between airports, in miles.
 
-	hour, minute
+	hour, minute:
 		Time of scheduled departure broken into hour and minutes.
 
-	time_hour
+	time_hour:
 		Scheduled date and hour of the flight as a POSIXct date. Along with origin, can be used to join flights data to weather data.
-- Source
+- Source:
   RITA, Bureau of transportation statistics, https://www.transtats.bts.gov/DL_SelectFields.asp?Table_ID=236
 
 
 my_airlines.rda
-- Description
-  Look up airline names from their carrier codes.
-- Format
+- Description:
+  Useful metadata about airlines.
+- Format:
   	Data frame with columns
 
-	carrier
+	carrier:
 		Two letter abbreviation.
 
-	name
+	name:
 		Full name.
 
-- Source
+- Source:
   https://www.transtats.bts.gov/DL_SelectFields.asp?Table_ID=236
 
 
 my_airports.rda
-- Description
+- Description:
   Useful metadata about airports.
-- Format
+- Format:
 	A data frame with columns:
 
-	faa
+	faa:
 		FAA airport code.
 
-	name
+	name:
 		Usual name of the aiport.
 
-	lat, lon
+	lat, lon:
 		Location of airport.
 
-	alt
+	alt:
 		Altitude, in feet.
 
-	tz
+	tz:
 		Timezone offset from GMT.
 
-	dst
+	dst:
 		Daylight savings time zone. A = Standard US DST: starts on the second Sunday of March, ends on the first Sunday of November. U = unknown. N = no dst.
 
-	tzone
+	tzone:
 		IANA time zone, as determined by GeoNames webservice.
-- Source
+- Source:
   http://openflights.org/data.html, downloaded 2014-06-27
 
 
 my_planes.rda
-- Description
-  Plane metadata for all plane tailnumbers found in the FAA aircraft registry. American Airways (AA) and Envoy Air (MQ) report fleet numbers rather than tail numbers so can't be matched.
-- Format
+- Description:
+  Useful metadata about planes.
+- Format:
 	A data frame with columns:
 
-	tailnum
+	tailnum:
 		Tail number.
 
-	year
+	year:
 		Year manufactured.
 
-	type
+	type:
 		Type of plane.
 
-	manufacturer, model
+	manufacturer, model:
 		Manufacturer and model.
 
-	engines, seats
+	engines, seats:
 		Number of engines and seats.
 
-	speed
+	speed:
 		Average cruising speed in mph.
 
-	engine
+	engine:
 		Type of engine.
 
-- Source
+- Source:
   FAA Aircraft registry, http://www.faa.gov/licenses_certificates/aircraft_certification/aircraft_registry/releasable_aircraft_download/
 
 my_weather.rda
-- Description
-  Hourly meterological data for LGA, JFK and EWR.
-- Format
+- Description:
+  Hourly meterological data for ATL.
+- Format:
   	A data frame with columns
 
-	origin
+	origin:
 		Weather station. Named origin to facilitate merging with flights data.
 
-	year, month, day, hour
+	year, month, day, hour:
 		Time of recording.
 
-	temp, dewp
+	temp, dewp:
 		Temperature and dewpoint in F.
 
-	humid
+	humid:
 		Relative humidity in %.
 
-	wind_dir, wind_speed, wind_gust
+	wind_dir, wind_speed, wind_gust:
 		Wind direction (in degrees), speed and gust speed (in mph).
 
-	precip
+	precip:
 		Precipitation, in inches.
 
 	pressure
 		Sea level pressure in millibars.
 
-	visib
+	visib:
 		Visibility in miles.
 
-	time_hour
+	time_hour:
 		Date and hour of the recording as a POSIXct date.
 
-- Source
+- Source:
   ASOS download from Iowa Environmental Mesonet, https://mesonet.agron.iastate.edu/request/download.phtml.
+
+my_city.rda
+- Description:
+  Atlanta city information.
+- Format:
+  	A data frame with columns
+
+	faa:
+		FAA airport code.
+
+	pop:
+		Population of the city.
+
+	mayor:
+		City major.
+
+	area:
+		Relative humidity in %.
+
+	wind_dir, wind_speed, wind_gust:
+		Wind direction (in degrees), speed and gust speed (in mph).
+
+	precip:
+		Metro area in sq miles.
+
+	zip:
+		Zip codes.
+
+	fip:
+		FIPS code.
+
+- Source:
+  Scraped from https://en.wikipedia.org/wiki/Atlanta.

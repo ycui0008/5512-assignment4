@@ -452,6 +452,11 @@ library(rvest)
 
 ```{r ATL wiki page}
 url_city <- ("https://en.wikipedia.org/wiki/Atlanta")
+```
+
+
+```{r}
+# Test whether the website is scrapable
 ATL_wiki <- url_city %>%
   bow() %>% scrape()
 ```
@@ -474,7 +479,7 @@ ATL_zip <- ATL_wiki %>% html_nodes(".postal-code") %>% html_text()
 ATL_fip <- ATL_wiki %>% html_nodes(".mergedtoprow:nth-child(42) td") %>% html_text() %>% str_sub(end = 8)
 
 # create table
-tibble(
+my_city <- tibble(
   faa = "ATL",
   pop = ATL_pop,
   mayor = ATL_mayor,
@@ -482,6 +487,8 @@ tibble(
   zip = ATL_zip,
   fip = ATL_fip
 )
+
+save(my_city, file = here::here("data", "my_city.rda"))
 ```
 
 
@@ -490,17 +497,19 @@ tibble(
 
 ## `r emo::ji("airplane")` Exercise 4
 
-
+This report is visible on [my GitHub](https://github.com/ycui0008/5512-assignment4). The README.md file specifies the data sets in the data folder. It contains the variable explanations.
 
 ## Acknowledgments
 
 Data for Exercise 3:
 
-- flights and airlines data were downloaded from [Bureau of Transportation Statistics](https://www.transtats.bts.gov/DL_SelectFields.asp?Table_ID=236)
-- airports data was downloaded from [Airport, airline and route data](https://openflights.org/data.html)
+- flights data was downloaded from [Bureau of Transportation Statistics](https://www.transtats.bts.gov/DL_SelectFields.asp?Table_ID=236)
+- airports and airlines data were downloaded from [Airport, airline and route data](https://openflights.org/data.html)
 - planes data was downloaded from [Federal Aviation Administration](https://www.faa.gov/licenses_certificates/aircraft_certification/aircraft_registry/releasable_aircraft_download/)
 - weather data was downloaded from [Iowa State University](https://mesonet.agron.iastate.edu/request/download.phtml?network=GA_ASOS)
 - city data was scraped from [wikipedia - Atlanta](https://en.wikipedia.org/wiki/Atlanta)
+
+Thanks to Hadley Wickham, the owner and maker of nycflights13 packages. I made the rda files and README.md following the documentation of nycflights13 (e.g. using same variable names, types, units).
 
 Packages used to produce this assignment are:
 
