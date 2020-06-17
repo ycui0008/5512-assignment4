@@ -190,9 +190,6 @@ p2
 ```{r}
 step <- hms("00:15:00") # The time interval is 15 mins
 
-p3 <- p2 %>%
-  select(Origin_lon, Origin_lat, Dep_DateTime) %>%
-  mutate(Dep_DateTime = ymd_hms(Dep_DateTime))
 ```
 
 ```{r generate sequences}
@@ -207,7 +204,7 @@ lat_2 <- as.tibble(seq(p2$Origin_lat[2], p2$Dest_lat[2], by = p2$lat_incre[2]))
 tibble2 <-bind_cols(lon_2,lat_2) %>% clean_names() %>%
   rename(Origin_lon = value_1, Origin_lat = value_2)
 
-path <- bind_rows(p3[1,][1:2], tibble1, tibble2) #The movement of airplane
+path <- bind_rows(p2[1,][1:2], tibble1, tibble2, p2[2,][3:4]) #The movement of airplane
 
 path$id <- seq.int(nrow(path))  
 ```
@@ -219,7 +216,7 @@ ggmap(usa_map)+
                  y=Origin_lat), 
              colour="Red", size = 1) +
   geom_point(data = path, aes(x = Origin_lon, y = Origin_lat, color = id)) +
-          scale_color_viridis_c() +
+  scale_color_viridis_c(option = "C") +
   geom_point(data=day1, aes(x=Origin_lon, y = Origin_lat),
              colour="#746FB2", size=2) +
   geom_point(data=day1, aes(x=Dest_lon, y = Dest_lat),
@@ -245,6 +242,14 @@ for (i in 1:nrow(path)){
   theme_map())
 }
 ```
+### test
+```{r}
+day1 %>%
+  mutate(AirTime_inter = AirTime/15) %>%
+  mutate(lon_incre = (Dest_lon - Origin_lon)/AirTime_inter,
+         lat_incre = (Dest_lat - Origin_lat)/AirTime_inter) %>%
+  select(DepTime, AirTime, Origin_lon, Origin_lat, Dest_lon, Dest_lat, lon_incre, lat_incre)
+```
 
 
 
@@ -252,7 +257,7 @@ for (i in 1:nrow(path)){
 
 ```{r}
 flights_NYtime %>%
-  filter(DayofMonth == 24, Reporting_Airline)
+  filter(DayofMonth == 24, Reporting_Airline == "B6")
 ```
 
 
@@ -436,9 +441,42 @@ library(polite)
 library(rvest)
 ```
 
-```{r}
-url_city
+```{r ATL wiki page}
+url_city <- ("https://en.wikipedia.org/wiki/Atlanta")
+ATL_wiki <- url_city %>%
+  bow() %>% scrape()
 ```
+
+```{r scraping}
+# scrape the population from wikipedia
+ATL_pop <- ATL_wiki %>% html_nodes(".mergedrow:nth-child(29) td") %>% html_text() %>% parse_number()
+
+# scrape the major's name from wikipedia
+ATL_mayor <- ATL_wiki %>% html_nodes(".mergedrow:nth-child(18) td") %>% html_text()
+
+# scrape the Metro area from wikipedia
+ATL_area <- ATL_wiki %>% html_nodes(".mergedrow:nth-child(25) td") %>% html_text() %>% 
+  parse_number()
+
+# scrape the zip from wikipedia
+ATL_zip <- ATL_wiki %>% html_nodes(".postal-code") %>% html_text()
+
+# scrape the fip from wikipedia
+ATL_fip <- ATL_wiki %>% html_nodes(".mergedtoprow:nth-child(42) td") %>% html_text() %>% str_sub(end = 8)
+
+# create table
+tibble(
+  faa = "ATL",
+  pop = ATL_pop,
+  mayor = ATL_mayor,
+  area = ATL_area,
+  zip = ATL_zip,
+  fip = ATL_fip
+)
+```
+
+
+
 
 
 ## `r emo::ji("airplane")` Exercise 4
