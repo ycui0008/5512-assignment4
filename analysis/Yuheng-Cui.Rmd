@@ -257,7 +257,8 @@ day1 %>%
   mutate(AirTime_inter = AirTime/15) %>%
   mutate(lon_incre = (Dest_lon - Origin_lon)/AirTime_inter,
          lat_incre = (Dest_lat - Origin_lat)/AirTime_inter) %>%
-  select(DepTime, AirTime, Origin_lon, Origin_lat, Dest_lon, Dest_lat, lon_incre, lat_incre)
+  select(DepTime, AirTime, Origin_lon, Origin_lat, Dest_lon, Dest_lat, lon_incre, lat_incre) %>%
+  arrange(DepTime)
 ```
 
 
@@ -265,24 +266,76 @@ day1 %>%
 ### e. 
 
 ```{r}
-flights_NYtime %>%
-  filter(DayofMonth == 24, Reporting_Airline == "B6")
+e4 <-flights_NYtime %>%
+  filter(DayofMonth == 24, Reporting_Airline == "B6") %>%
+  mutate(AirTime_inter = AirTime/15) %>%
+  mutate(lon_incre = (Dest_lon - Origin_lon)/AirTime_inter,
+         lat_incre = (Dest_lat - Origin_lat)/AirTime_inter) %>%
+  select(DepTime, AirTime, Origin_lon, Origin_lat, Dest_lon, Dest_lat, DepDelay, lon_incre, lat_incre) %>%
+  arrange(DepTime) %>%
+  mutate(DepTime = paste0("2020-02-24 ",
+                          substr(DepTime, 1, 2),
+                          ":",
+                          substr(DepTime, 3, 4))) %>%
+  mutate(DepTime = ymd_hm(DepTime))
+
+#e4
 ```
 
 
+```{r}
+# test1 <- (1:(e4$AirTime[1]%/%15))
+# 
+# #longitude change sequence
+# ((e4$Dest_lon[1] - e4$Origin_lon[1])*15*test1)/(e4$AirTime[1]) + e4$Origin_lon[1]
+# 
+# #latitude change sequence
+# ((e4$Dest_lat[1] - e4$Origin_lat[1])*15*test1)/(e4$AirTime[1]) + e4$Origin_lat[1]
+# 
+# #time change
+# e4$DepTime[1] + step*test1
+```
 
+```{r create function}
+pathtable <- function(i){
+  test1 <- (1:(e4$AirTime[i]%/%15))
+  
+  #longitude change sequence
+  lon_incre <- ((e4$Dest_lon[i] - e4$Origin_lon[i])*15*test1)/(e4$AirTime[i]) + e4$Origin_lon[i]
 
-
-Here is one way to make an animation.
-
-```{r, animation.hook='gifski', out.width="100%", fig.width=4, fig.height=2}
-d <- tibble(koala=1:10, kangaroo=1:10)
-for (i in 1:10){
-  print(ggplot(data=d, aes(x=koala, y=kangaroo)) +
-    geom_point(alpha=0.1) +
-    geom_point(data=d[i,], colour="red"))
+  #latitude change sequence
+  lat_incre <- ((e4$Dest_lat[i] - e4$Origin_lat[i])*15*test1)/(e4$AirTime[i]) + e4$Origin_lat[i]
+  
+  #time change
+  time_incre <- e4$DepTime[i] + step*test1
+  
+  DepDelay <- rep(e4$DepDelay[i], (e4$AirTime[i]%/%15))
+  
+  tibble(
+    DepTime = time_incre,
+    Origin_lon = lon_incre,
+    Origin_lat = lat_incre,
+    DepDelay = DepDelay
+  )
 }
 ```
+
+```{r path_way}
+path_way <- bind_rows(pathtable(1),pathtable(2),pathtable(3),pathtable(4),pathtable(5),pathtable(6),pathtable(7),pathtable(8),pathtable(9),pathtable(10),pathtable(11),pathtable(12),pathtable(13),pathtable(14))
+```
+
+```{r gganimate}
+library(gganimate)
+```
+
+```{r}
+ggmap(usa_map) +
+  geom_point(data = path_way, aes(x= Origin_lon, y = Origin_lat,size = DepDelay)) +
+  #ggtitle("Time: {frame_DepTime}") +
+  transition_time(DepTime) +
+  ease_aes('linear')
+```
+
 
 ## `r emo::ji("airplane")` Exercise 3
 
