@@ -1,11 +1,14 @@
 ---
 title: "ETC5512 Assignment 4: An Analysis of US Air Traffic"
-subtitle: "Name of your airport"
-author: "Firstname Lastname"
+subtitle: "ATL airport"
+author: "Yuheng Cui"
 date: "June 19,  2020"
+bibliography: references.bib
+biblio-style: authoryear-comp
 output: 
-  html_document:
+  bookdown::html_document2:
     toc: true
+    citation_package: biblatex
 ---
 
 ```{r setup, include=FALSE}
@@ -23,6 +26,7 @@ library(lubridate)
 library(kableExtra)
 library(janitor)
 library(viridis)
+library(bookdown)
 ```
 
 
@@ -46,7 +50,7 @@ save(airport, file = here::here("data","airport_ATL.rda"))
 ```
 
 
-Paragraph...
+Here, I chose ATL airport and UA airline.
 
 ### b. 
 ```{r read airport data}
@@ -81,20 +85,25 @@ usa_bbox <- c(-130, # min long
 usa_map <- get_map(location = usa_bbox, source = "osm")
 ```
 
+```{r choose UA in flight data set}
+flight_UA <- flight %>%
+  filter(Reporting_Airline == "UA")
+```
+
 
 ```{r flight path}
-ggmap(usa_map) + geom_segment(data=flight, 
+ggmap(usa_map) + geom_segment(data=flight_UA, 
                      aes(x=Origin_lon, 
                          xend=Dest_lon,
                          y=Origin_lat,
                          yend=Dest_lat), 
-                     colour="#9651A0", alpha=0.01) +
+                     colour="#7434eb", size = 2, alpha=0.01) +
   geom_point(data=flight, aes(x=Origin_lon, Origin_lat),
-             colour="#746FB2", alpha=0.1, size=1) +
+             colour="#f5ed00", alpha=0.1, size=1.5) +
   theme_map()
 ```
 
-
+The level of transparency of the lines specifies how often does UA carry flights between ATL airport and other airports in Feb 2020. The deeper the color means more flights.
 
 ## `r emo::ji("airplane")` Exercise 2
 
@@ -480,6 +489,22 @@ tibble(
 
 
 ## `r emo::ji("airplane")` Exercise 4
+
+
+
+## Acknowledgments
+
+Data for Exercise 3:
+
+- flights and airlines data were downloaded from [Bureau of Transportation Statistics](https://www.transtats.bts.gov/DL_SelectFields.asp?Table_ID=236)
+- airports data was downloaded from [Airport, airline and route data](https://openflights.org/data.html)
+- planes data was downloaded from [Federal Aviation Administration](https://www.faa.gov/licenses_certificates/aircraft_certification/aircraft_registry/releasable_aircraft_download/)
+- weather data was downloaded from [Iowa State University](https://mesonet.agron.iastate.edu/request/download.phtml?network=GA_ASOS)
+- city data was scraped from [wikipedia - Atlanta](https://en.wikipedia.org/wiki/Atlanta)
+
+Packages used to produce this assignment are:
+
+tidyverse [@tidyverse], ggmap [@ggmap], ggthemes [@ggthemes], lutz [@lutz], lubridate [@lubridate], kableExtra [@kableExtra], janitor [@janitor], viridis [@viridis], bookdown [@bookdown]
 
 ## References
 
