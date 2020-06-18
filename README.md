@@ -2,7 +2,10 @@
 
 The code is in Yuheng_Cui.Rmd located in analysis folder.
 
+Short comments in the script contain detailed explanation for each chunk.
+
 Exercise 1 and 3 both requires save data sets in rda format, to differentiate the files saved for different exercises, all rda files in Exercise 3 are named after **my_**, for example, my_flights.rda.
+
 
 
 # my_flights.rda
@@ -30,10 +33,10 @@ Exercise 1 and 3 both requires save data sets in rda format, to differentiate th
 		Flight number.
 
 	- tailnum:
-		Plane tail number. See planes for additional metadata.
+		Plane tail number. See my_planes for additional metadata.
 
 	- origin, dest:
-		Origin and destination. See airports for additional metadata.
+		Origin and destination. See my_airports for additional metadata.
 
 	- air_time:
 		Amount of time spent in the air, in minutes.
@@ -95,7 +98,7 @@ Exercise 1 and 3 both requires save data sets in rda format, to differentiate th
 		IANA time zone, as determined by GeoNames webservice.
 
 - Source:
-  http://openflights.org/data.html, downloaded 2014-06-27
+  http://openflights.org/data.html, downloaded 2020-06-17
 
 
 # my_planes.rda
@@ -174,18 +177,12 @@ Exercise 1 and 3 both requires save data sets in rda format, to differentiate th
 		FAA airport code.
 
 	- pop:
-		Population of the city.
+		City opulation.
 
 	- mayor:
 		City major.
 
 	- area:
-		Relative humidity in %.
-
-	- wind_dir, wind_speed, wind_gust:
-		Wind direction (in degrees), speed and gust speed (in mph).
-
-	- precip:
 		Metro area in sq miles.
 
 	- zip:

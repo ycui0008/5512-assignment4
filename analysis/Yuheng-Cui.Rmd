@@ -27,6 +27,9 @@ library(janitor)
 library(viridis)
 library(bookdown)
 library(gganimate)
+# for exercise 3
+library(polite)
+library(rvest)
 ```
 
 
@@ -37,43 +40,60 @@ library(gganimate)
 d <- read_csv(here::here("raw_data","On_Time_Reporting_Carrier_On_Time_Performance_(1987_present)_2020_2.csv"))
 ```
 
-```{r choose one carrier, , eval=FALSE}
-ca <- d %>%
-  filter(Reporting_Airline == "UA")
-save(ca, file = here::here("data","airlines.rda"))
-```
-
-```{r choose one airport, , eval=FALSE}
-airport <- d %>%
+```{r choose one carrier, eval=FALSE}
+feb <- d %>%
+  # Choose carrier "UA" and month Feb
+  filter(Reporting_Airline == "UA", Month == 2)%>%
+  # Choose ATL airport, according to arrive at/ departure from
   filter(Origin == "ATL" | Dest == "ATL")
-save(airport, file = here::here("data","airport_ATL.rda"))
 ```
 
 
-Here, I chose ATL airport and UA airline.
+```{r load_ATL_feb_UA.rda}
+# load the rda file created in Exercise 1.b
+load(file = here::here("data","ATL_feb_UA.rda"))
+flight %>%
+  select(Year, Month, DayofMonth, Reporting_Airline, Origin, Dest) %>%
+  head() %>%
+  kable(booktabs = TRUE, caption = "Carrier UA in ATL airport in Feb 2020") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+
+
+
+Here, I chose the UA airline' flights related to ATL airport in Feb 2020.
+
+First, I read the data from csv file. Then, I filter the data set and save the data set as rda file. Next, (in 1.b) I joined airport data set into the data set and save the new data set as rda file. Now, I can load the file to save directly.
 
 ### b. 
-```{r read airport data, , eval=FALSE}
+```{r read airport data, eval=FALSE}
 d1 <- read_csv(here::here("raw_data","516691980_T_MASTER_CORD.csv"))
 ```
 
+
 ```{r join d1 into airport, eval=FALSE}
 airport_location <- d1 %>%
-  filter(AIRPORT_IS_CLOSED == 0 & # select the airports are still on businesses at the time
+  # select the airports were still on businesses at the time and located in the US
+  filter(AIRPORT_IS_CLOSED == 0 & 
            AIRPORT_IS_LATEST == 1 &
            AIRPORT_COUNTRY_CODE_ISO == "US") %>% 
+  # select useful columns only
   select(AIRPORT, DISPLAY_AIRPORT_NAME, LONGITUDE, LATITUDE)
 
-flight <- airport %>%
+flight <- feb %>%
+  # combine flight data set with airport data set
   left_join(airport_location, by = c("Origin" = "AIRPORT")) %>%
-  rename("Origin_lon" = "LONGITUDE","Origin_lat" = "LATITUDE") %>% # rename origin airport longitude and latitude
+  # rename origin airport longitude and latitude
+  rename("Origin_lon" = "LONGITUDE","Origin_lat" = "LATITUDE") %>% 
   left_join(airport_location, by = c("Dest" = "AIRPORT")) %>%
-  rename("Dest_lon" = "LONGITUDE","Dest_lat" = "LATITUDE") # rename dest airport longitude and latitude
+  # rename dest airport longitude and latitude
+  rename("Dest_lon" = "LONGITUDE","Dest_lat" = "LATITUDE") 
 
-save(flight,file = here::here("data","flights.rda"))
+save(flight,file = here::here("data","ATL_feb_UA.rda"))
 ```
 
-
+I join airport information data set into the data set created in last question. I used join function twice for "origin" and "dest" airports, respectively. At last, I saved the new data set as rda file.
 
 ### c. 
 ```{r generate a map of US}
@@ -85,38 +105,49 @@ usa_bbox <- c(-130, # min long
 usa_map <- get_map(location = usa_bbox, source = "osm")
 ```
 
+
 ```{r choose UA in flight data set}
-load(file = here::here("data","flights.rda"))
+# load the rda file
+load(file = here::here("data","ATL_feb_UA.rda"))
+
+# select only carrier UA
 flight_UA <-  flight%>%
   filter(Reporting_Airline == "UA")
 ```
 
 
 ```{r flight path}
-ggmap(usa_map) + geom_segment(data=flight_UA, 
+ggmap(usa_map) + 
+  # create purple lines between origin and dest airports
+  geom_segment(data=flight_UA, 
                      aes(x=Origin_lon, 
                          xend=Dest_lon,
                          y=Origin_lat,
                          yend=Dest_lat), 
                      colour="#7434eb", size = 2, alpha=0.01) +
+  # Red dots stand for different airports
   geom_point(data=flight, aes(x=Origin_lon, Origin_lat),
              colour="Red", alpha=0.1, size=1.5) +
   theme_map()
 ```
 
-The level of transparency of the lines specifies how often does UA carry flights between ATL airport and other airports in Feb 2020. The deeper the color means more flights.
+The level of transparency of the lines specifies how often does UA carry flights between ATL airport and other airports in Feb 2020. The deeper the color means more flights between the two airports.
 
 ## `r emo::ji("airplane")` Exercise 2
 
 ### a. 
+
 ```{r standardise timezone}
 flights_NYtime <- flight %>%
+  # remove missing values
   filter(!is.na(Origin_lon)) %>%
   filter(!is.na(Dest_lon)) %>%
   filter(!is.na(DepTime)) %>%
+            # set timezone for origin airports
   mutate(origin_tz = tz_lookup_coords(Origin_lat,
                                       Origin_lon, 
                                       warn = FALSE),
+           # set timezone for origin airports
          dest_tz = tz_lookup_coords(Dest_lat,
                                     Dest_lon,
                                     warn = FALSE)) %>%
@@ -125,13 +156,13 @@ flights_NYtime <- flight %>%
                            substr(DepTime, 1, 2),":", 
                            substr(DepTime, 3, 4), ":00")) %>%
   mutate(Origin_DateTime_NY = force_tzs(ymd_hms(Dep_DateTime),
-      tzones = origin_tz, tzone_out = "America/New_York")) %>% # Normalise Dep DateTime
+      tzones = origin_tz, tzone_out = "America/New_York")) %>% # Normalise Origin DateTime
   mutate(Arr_DateTime = paste0(FlightDate,
                                " ",
                                substr(ArrTime, 1, 2),":", 
                                substr(ArrTime, 3, 4), ":00")) %>%
   mutate(Dest_DateTime_NY = force_tzs(ymd_hms(Arr_DateTime),
-      tzones = dest_tz, tzone_out = "America/New_York"))
+      tzones = dest_tz, tzone_out = "America/New_York")) # Normalise Dest DateTime
 
 flights_NYtime %>%
   select(Origin_DateTime_NY, Dest_DateTime_NY, Tail_Number, Origin, Dest) %>%
@@ -153,9 +184,9 @@ flights_NYtime %>%
 ```
 
 ```{r choose one plane from the list above}
-# Select a plane whose tail number was N7823A
+# Select a plane whose tail number was N16234 flied on 3rd Feb 2020
 day1 <- flights_NYtime %>%
-  filter(Tail_Number == "N7823A", DayofMonth == 24)
+  filter(Tail_Number == "N16234", DayofMonth == 3)
 
 ggmap(usa_map) +
   geom_segment(data=day1, 
@@ -164,8 +195,10 @@ ggmap(usa_map) +
                          y=Origin_lat,
                          yend=Dest_lat), 
                      colour="#7434eb", size = 1) +
+  # Plot the Origin airports on the map
   geom_point(data=day1, aes(x=Origin_lon, y = Origin_lat),
              colour="Red", size=2) +
+  # Plot the Dest airports on the map
   geom_point(data=day1, aes(x=Dest_lon, y = Dest_lat),
              colour="Red", size=2)
   theme_map()
@@ -177,36 +210,46 @@ ggmap(usa_map) +
 ### c. 
 
 ```{r, eval = FALSE}
-# # test the procedure
-# test1 <- (1:(e4$AirTime[1]%/%15))
-# 
-# #longitude change sequence
-# ((e4$Dest_lon[1] - e4$Origin_lon[1])*15*test1)/(e4$AirTime[1]) + e4$Origin_lon[1]
-# 
-# #latitude change sequence
-# ((e4$Dest_lat[1] - e4$Origin_lat[1])*15*test1)/(e4$AirTime[1]) + e4$Origin_lat[1]
-# 
-# #time change
-# e4$DepTime[1] + step*test1
+# This chunk was used to createt the function below
+test1 <- (0:(e3$AirTime[2]))
+
+#longitude change sequence
+c(e3$Origin_lon[2]+((e3$Dest_lon[2] - e3$Origin_lon[2])*test1)/(e3$AirTime[2]))
+
+#latitude change sequence
+c(e3$Origin_lat[2]+((e3$Dest_lat[2] - e3$Origin_lat[2])*test1)/(e3$AirTime[2]))
+
+#time change
+c(e3$DepTime[2] + step1*(test1))
+
+rep(e3$DepDelay[2], ((e3$AirTime[2])+1))
+
+
 ```
 
-```{r create function}
-step <- hms("00:15:00") # The time interval is 15 mins
 
+
+```{r create function}
+# The time interval is 15 mins
+step <- hms("00:15:00") 
+step1 <- hms("00:01:00")
+# Create a function used to generate flight path
 pathtable <- function(data,i){
-  test1 <- (1:(data$AirTime[i]%/%15))
+  test1 <- (0:(data$AirTime[i]%/%15-2))
   
   #longitude change sequence
-  lon_incre <- ((data$Dest_lon[i] - data$Origin_lon[i])*15*test1)/(data$AirTime[i]) + data$Origin_lon[i]
+  lon_incre <- c(((data$Dest_lon[i] - data$Origin_lon[i])*15*test1)/(data$AirTime[i]) + data$Origin_lon[i], data$Dest_lon[i])
 
   #latitude change sequence
-  lat_incre <- ((data$Dest_lat[i] - data$Origin_lat[i])*15*test1)/(data$AirTime[i]) + data$Origin_lat[i]
+  lat_incre <- c(((data$Dest_lat[i] - data$Origin_lat[i])*15*test1)/(data$AirTime[i]) + data$Origin_lat[i], data$Dest_lat[i])
   
   #time change
-  time_incre <- data$DepTime[i] + step*test1
+  time_incre <- c(data$DepTime[i] + step*test1, data$ArrTime[i])
   
-  DepDelay <- rep(data$DepDelay[i], (data$AirTime[i]%/%15))
+  # paste DepDelay to the table
+  DepDelay <- rep(data$DepDelay[i], ((data$AirTime[i]%/%15)))
   
+  # Create the table
   tibble(
     DepTime = time_incre,
     Origin_lon = lon_incre,
@@ -216,22 +259,27 @@ pathtable <- function(data,i){
 }
 ```
 
-### test for c
 
 ```{r one day and one plane}
 e3 <- flights_NYtime %>%
-  filter(Tail_Number == "N7823A", DayofMonth == 24) %>%
-  mutate(AirTime_inter = AirTime/15) %>%
-  mutate(lon_incre = (Dest_lon - Origin_lon)/AirTime_inter,
-         lat_incre = (Dest_lat - Origin_lat)/AirTime_inter) %>%
-  select(DepTime, AirTime, Origin_lon, Origin_lat, Dest_lon, Dest_lat, DepDelay, lon_incre, lat_incre) %>%
+  # choose one plane in 3rd Feb 2020
+  filter(Tail_Number == "N16234", DayofMonth == 3) %>%
+  select(DepTime, ArrTime, AirTime, Origin_lon, Origin_lat, Dest_lon, Dest_lat, DepDelay) %>%
   arrange(DepTime) %>%
-  mutate(DepTime = paste0("2020-02-24 ",
+  # 
+  mutate(DepTime = paste0("2020-02-03 ",
                           substr(DepTime, 1, 2),
                           ":",
                           substr(DepTime, 3, 4))) %>%
-  mutate(DepTime = ymd_hm(DepTime))
+  
+  mutate(ArrTime = paste0("2020-02-03 ",
+                          substr(ArrTime, 1, 2),
+                          ":",
+                          substr(ArrTime, 3, 4)))%>%
+  mutate(DepTime = ymd_hm(DepTime),
+         ArrTime = ymd_hm(ArrTime))
 ```
+
 
 ```{r the movement of one plance in one day}
 path_1 <- bind_rows(pathtable(e3, 1), pathtable(e3, 2)) %>%
@@ -254,56 +302,72 @@ ggmap(usa_map)+
   theme_map()
 ```
 
+First, I created a function for drawing flight path of each plane. Then, I used to the function to create the table of flight path. Finally, I used the flight path table to draw the map. The colour represents the time. 
+
+Sometimes, a dot are far away from previous dot. This situation only happens near the destination airports, because the time interval is greater than 15 minutes, unlike other dots.
+
+
 
 ### d. 
 
-```{r animatedplot for one plane in a day}
-ggmap(usa_map) +
-  geom_point(data = path_1, aes(x= Origin_lon, y = Origin_lat), size = 2) +
-  ggtitle("Time: {frame_time}") +
-  transition_time(DepTime)
+```{r one plane, animation.hook='gifski', out.width="100%", fig.width=4, fig.height=2}
+for (i in 1:nrow(path_1)){
+  print(ggmap(usa_map)+
+          geom_point(data=e3, aes(x=Origin_lon, y = Origin_lat),
+             colour="Red", size=2) +
+          geom_point(data=e3, aes(x=Dest_lon, y = Dest_lat),
+             colour="Red", size=2) +
+          geom_point(data = path_1, aes(x = path_1[[2]][i], y = path_1[[3]][i]),color = 'White') +
+  theme_map())
+}
 ```
 
 
+
+Here, the gif specifies the flight path of this plane, showing its position every 15 minutes.
 
 ### e. 
 
 ```{r choose one day and one carrier}
 e4 <-flights_NYtime %>%
-  filter(DayofMonth == 24, Reporting_Airline == "B6") %>%
-  mutate(AirTime_inter = AirTime/15) %>%
-  mutate(lon_incre = (Dest_lon - Origin_lon)/AirTime_inter,
-         lat_incre = (Dest_lat - Origin_lat)/AirTime_inter) %>%
-  select(DepTime, AirTime, Origin_lon, Origin_lat, Dest_lon, Dest_lat, DepDelay, lon_incre, lat_incre) %>%
+  filter(DayofMonth == 3, Reporting_Airline == "UA") %>%
+  select(DepTime, ArrTime, AirTime, Origin_lon, Origin_lat, Dest_lon, Dest_lat, DepDelay) %>%
   arrange(DepTime) %>%
-  mutate(DepTime = paste0("2020-02-24 ",
+  mutate(DepTime = paste0("2020-02-03 ",
                           substr(DepTime, 1, 2),
                           ":",
                           substr(DepTime, 3, 4))) %>%
-  mutate(DepTime = ymd_hm(DepTime))
+  mutate(ArrTime = paste0("2020-02-03 ",
+                          substr(ArrTime, 1, 2),
+                          ":",
+                          substr(ArrTime, 3, 4)))%>%
+  mutate(DepTime = ymd_hm(DepTime),
+         ArrTime = ymd_hm(ArrTime))
 ```
 
 
 
 
 ```{r path_way}
-path_way <- bind_rows(pathtable(e4,1),pathtable(e4,2),pathtable(e4,3),pathtable(e4,4),pathtable(e4,5),pathtable(e4,6),pathtable(e4,7),pathtable(e4,8),pathtable(e4,9),pathtable(e4,10),pathtable(e4,11),pathtable(e4,12),pathtable(e4,13),pathtable(e4,14)) %>%
+# Create flight path table for exercise 2.E
+path_way <- bind_rows(pathtable(e4,1),pathtable(e4,2),pathtable(e4,3),pathtable(e4,4),pathtable(e4,5),pathtable(e4,6),pathtable(e4,7),pathtable(e4,8),pathtable(e4,9),pathtable(e4,10),pathtable(e4,11),pathtable(e4,12),pathtable(e4,13),pathtable(e4,14),pathtable(e4,15),pathtable(e4,16),pathtable(e4,17),pathtable(e4,18),pathtable(e4,19),pathtable(e4,20),pathtable(e4,21),pathtable(e4,22),pathtable(e4,23),pathtable(e4,24),pathtable(e4,25),pathtable(e4,26)) %>%
   arrange(DepTime)
 ```
 
 
-```{r}
+```{r animation2}
+# Use gganimate to generate animated plot
 ggmap(usa_map) +
   geom_point(data = path_way, aes(x= Origin_lon, y = Origin_lat,size = DepDelay)) +
-  ggtitle("Time: {frame_time}") +
-  transition_time(DepTime) +
-  ease_aes('linear')
+  labs(title = "UA's flights in 2020-02-03", subtitle = "Time: {frame_time}") +
+  transition_time(DepTime)
 ```
 
+This animated plot specifies the flight paths of UA airline's planes on 3rd Feb 2020. There are some planes flied overnight; that's why the time frame shows the date of 2020-02-04.
 
 ## `r emo::ji("airplane")` Exercise 3
 
-```{r new data flights}
+```{r new data flights, eval=FALSE}
 new_d <-read_csv(here::here("raw_data","On_Time_Reporting_Carrier_On_Time_Performance_(1987_present)_2020_2.csv")) %>%
   select(Year, Month, DayofMonth, DepTime, CRSDepTime, DepDelay, ArrTime, CRSArrTime, ArrDelay, Reporting_Airline, Flight_Number_Reporting_Airline, Tail_Number, Origin, Dest, AirTime, Distance) %>%
   rename(Day = DayofMonth, sched_dep_time = CRSDepTime, sched_arr_time = CRSArrTime, Carrier = Reporting_Airline, Flight = Flight_Number_Reporting_Airline) %>%
@@ -328,7 +392,7 @@ new_d <-read_csv(here::here("raw_data","On_Time_Reporting_Carrier_On_Time_Perfor
 save(new_d, file = here::here("data","my_flights.rda"))
 ```
 
-```{r new data airlines}
+```{r new data airlines, eval=FALSE}
 # Download raw data
 url_airlines <- ("https://raw.githubusercontent.com/jpatokal/openflights/master/data/airlines.dat")
 download.file(url_airlines, destfile = here::here("raw_data","airlines.csv"))
@@ -345,32 +409,36 @@ new_airlines <- new_airlines %>%
 save(new_airlines, file = here::here("data","my_airlines.rda"))
 ```
 
-```{r new data airport}
+```{r new data airport, eval=FALSE}
 # Download raw data
 url_airport <- ("https://raw.githubusercontent.com/jpatokal/openflights/master/data/airports.dat") 
 download.file(url_airport, destfile = here::here("raw_data","airports.csv"))
 
 # Read data and add col names
 new_airport <- read_csv(here::here("raw_data","airports.csv"), col_names = c("Airport ID", "Name", "City", "Country", "IATA", "ICAO", "Latitude", "Longitude", "Altitude", "Timezone", "DST", "Tz database time zone", "Type", "Source")) %>% 
+  # use janitor package to clean the variable names
   clean_names() %>%
+  # only select the airports located in the US
   filter(country == "United States")
 
 new_airport <- new_airport %>%
   select(iata, name, latitude, longitude, altitude, timezone, dst, tz_database_time_zone) %>%
+  # Change the variable names, make them as same as nycflight13::airports
   rename(faa = iata, lat = latitude, lon = longitude, alt = altitude, tz = timezone, tzone = tz_database_time_zone) %>%
+  # Convert the data type, make them as same as nycflight13::airports
   mutate(dst = parse_character(dst))
 
 save(new_airport, file = here::here("data","my_airports.rda"))
 ```
 
-```{r new data planes}
+```{r new data planes, eval=FALSE}
 raw_planes <- read_csv(here::here("raw_data/ReleasableAircraft/MASTER.TXT")) %>% clean_names()
 raw_engine <- read_csv(here::here("raw_data/ReleasableAircraft/ENGINE.TXT")) %>% clean_names()
 raw_acf <- read_csv(here::here("raw_data/ReleasableAircraft/ACFTREF.TXT")) %>% clean_names()
 ```
 
-```{r ducumentation}
-# Find out the Descriptions for type engine and type aircraft
+```{r ducumentation, eval=FALSE}
+# Find out the Descriptions for type engine and type aircraft in the documentation
 # Create table for Type Engine
 type_engine <- tibble(type = c(0:11), engine_desc = c("None","Reciprocating", "Turbo-prop", "Turbo-shaft","Turbo-jet","Turbo-fan","Ramjet","2 Cycle","4 Cycle","Unknown","Electric","Rotary"))
 
@@ -387,7 +455,7 @@ type_aircraft <- tibble(type = c(1:9,"H","O"), aircraft_desc = c("Glider","Ballo
 "Other"))
 ```
 
-```{r join tables into one}
+```{r join tables into one, eval=FALSE}
 # Join plane, engine, acf, type engine and type aircraft tables
 my_planes <- raw_planes %>%
   left_join(raw_engine, by = c("eng_mfr_mdl" = "code")) %>%
@@ -415,11 +483,12 @@ my_planes <- raw_planes %>%
          seats = no_seats,
          engine = engine_desc) %>%
   mutate(tailnum = paste0("N",tailnum)) %>%
-  # Convert the variable types into right types
+  # Convert the data type, make them as same as nycflight13::planes
   mutate(year = as.integer(year),
          engines = as.integer(engines),
          seats = as.integer(seats),
          speed = as.integer(speed)) %>%
+  # remove missing values, due to some planes being deregisted
   filter(!is.na(type)) %>%
   filter(!is.na(model)) 
 
@@ -427,11 +496,11 @@ save(my_planes, file = here::here("data","my_planes.rda"))
 ```
 
 
-```{r read weather data}
+```{r read weather data, eval=FALSE}
 raw_weather <- read_csv(here::here("raw_data","asos_ATL.txt"))
 ```
 
-```{r my weather data}
+```{r my weather data, eval=FALSE}
 my_weather <- raw_weather %>%
   select(station, valid, tmpf, dwpf, relh, drct, sknt, p01i, alti, vsby, gust) %>%
   mutate(year = year(valid),
@@ -450,6 +519,7 @@ my_weather <- raw_weather %>%
          visib = vsby,
          wind_gust = gust) %>%
   select(origin, year, month, day, hour, temp, dewp, humid, wind_dir, wind_speed, wind_gust, precip, pressure, visib, time_hour) %>%
+  # Convert the data type, make them as same as nycflight13::weather
   mutate(year = as.integer(year),
          month = as.integer(month),
          temp = as.double(temp),
@@ -464,23 +534,18 @@ save(my_weather, file = here::here("data", "my_weather.rda"))
 ```
 
 
-```{r load packages}
-library(polite)
-library(rvest)
-```
-
-```{r ATL wiki page}
+```{r ATL wiki page, eval=FALSE}
 url_city <- ("https://en.wikipedia.org/wiki/Atlanta")
 ```
 
 
-```{r}
+```{r bow, eval=FALSE}
 # Test whether the website is scrapable
 ATL_wiki <- url_city %>%
   bow() %>% scrape()
 ```
 
-```{r scraping}
+```{r scraping, eval=FALSE}
 # scrape the population from wikipedia
 ATL_pop <- ATL_wiki %>% html_nodes(".mergedrow:nth-child(29) td") %>% html_text() %>% parse_number()
 
@@ -528,12 +593,10 @@ Data for Exercise 3:
 - weather data was downloaded from [Iowa State University](https://mesonet.agron.iastate.edu/request/download.phtml?network=GA_ASOS)
 - city data was scraped from [wikipedia - Atlanta](https://en.wikipedia.org/wiki/Atlanta)
 
-Thanks to Hadley Wickham, the owner and maker of nycflights13 packages. I made the rda files and README.md following the documentation of nycflights13 (e.g. using same variable names, types, units).
+Thanks to Hadley Wickham, the owner and maker of nycflights13 packages. I made the rda files and README.md following the documentation of *nycflights13*.
 
 Packages used to produce this assignment are:
 
 tidyverse [@tidyverse], ggmap [@ggmap], ggthemes [@ggthemes], lutz [@lutz], lubridate [@lubridate], kableExtra [@kableExtra], janitor [@janitor], viridis [@viridis], bookdown [@bookdown]
 
 ## References
-
-Cite  the main sources for your work, including R packages used.
