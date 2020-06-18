@@ -596,6 +596,6 @@ Thanks to nycflight13 [@nycflight13]. I made the rda files and README.md followi
 
 Packages used to produce this assignment are:
 
-tidyverse [@tidyverse], ggmap [@ggmap], ggthemes [@ggthemes], lutz [@lutz], lubridate [@lubridate], kableExtra [@kableExtra], janitor [@janitor], viridis [@viridis], bookdown [@bookdown]
+tidyverse [@tidyverse], ggmap [@ggmap], ggthemes [@ggthemes], lutz [@lutz], lubridate [@lubridate], kableExtra [@kableExtra], janitor [@janitor], viridis [@viridis], bookdown [@bookdown], polite [@polite], rvest [@rvest]
 
 ## References
