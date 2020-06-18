@@ -210,29 +210,28 @@ ggmap(usa_map) +
 ### c. 
 
 ```{r, eval = FALSE}
-# This chunk was used to createt the function below
-test1 <- (0:(e3$AirTime[2]))
-
-#longitude change sequence
-c(e3$Origin_lon[2]+((e3$Dest_lon[2] - e3$Origin_lon[2])*test1)/(e3$AirTime[2]))
-
-#latitude change sequence
-c(e3$Origin_lat[2]+((e3$Dest_lat[2] - e3$Origin_lat[2])*test1)/(e3$AirTime[2]))
-
-#time change
-c(e3$DepTime[2] + step1*(test1))
-
-rep(e3$DepDelay[2], ((e3$AirTime[2])+1))
-
+# # This chunk was used to createt the function below
+# test1 <- (0:(e3$AirTime[2]))
+# 
+# #longitude change sequence
+# c(e3$Origin_lon[2]+((e3$Dest_lon[2] - e3$Origin_lon[2])*test1)/(e3$AirTime[2]))
+# 
+# #latitude change sequence
+# c(e3$Origin_lat[2]+((e3$Dest_lat[2] - e3$Origin_lat[2])*test1)/(e3$AirTime[2]))
+# 
+# #time change
+# c(e3$DepTime[2] + step1*(test1))
+# 
+# rep(e3$DepDelay[2], ((e3$AirTime[2])+1))
+# 
 
 ```
-
 
 
 ```{r create function}
 # The time interval is 15 mins
 step <- hms("00:15:00") 
-step1 <- hms("00:01:00")
+
 # Create a function used to generate flight path
 pathtable <- function(data,i){
   test1 <- (0:(data$AirTime[i]%/%15-2))
@@ -258,7 +257,6 @@ pathtable <- function(data,i){
   )
 }
 ```
-
 
 ```{r one day and one plane}
 e3 <- flights_NYtime %>%
@@ -324,6 +322,7 @@ for (i in 1:nrow(path_1)){
 
 
 
+
 Here, the gif specifies the flight path of this plane, showing its position every 15 minutes.
 
 ### e. 
@@ -363,7 +362,7 @@ ggmap(usa_map) +
   transition_time(DepTime)
 ```
 
-This animated plot specifies the flight paths of UA airline's planes on 3rd Feb 2020. There are some planes flied overnight; that's why the time frame shows the date of 2020-02-04.
+This animated plot specifies the flight paths of UA airline's planes on 3rd Feb 2020. There are some planes flied overnight; that's why the time frame shows the date of 2020-02-04. But it seems that the *transition_time* function cannot differentiate the date_time data. Thus, it was a little  
 
 ## `r emo::ji("airplane")` Exercise 3
 
@@ -581,7 +580,7 @@ save(my_city, file = here::here("data", "my_city.rda"))
 
 ## `r emo::ji("airplane")` Exercise 4
 
-This report is visible on [my GitHub](https://github.com/ycui0008/5512-assignment4). The README.md file specifies the data sets in the data folder. It contains the variable explanations.
+This report is visible on [my GitHub](https://github.com/ycui0008/5512-assignment4). The README.md file specifies the data sets in the data folder. It contains the variable explanations. The data source of rda files in data folder are shown in Acknowledgments section. The variables of the data sets are listed in the README.md.
 
 ## Acknowledgments
 
@@ -593,7 +592,7 @@ Data for Exercise 3:
 - weather data was downloaded from [Iowa State University](https://mesonet.agron.iastate.edu/request/download.phtml?network=GA_ASOS)
 - city data was scraped from [wikipedia - Atlanta](https://en.wikipedia.org/wiki/Atlanta)
 
-Thanks to Hadley Wickham, the owner and maker of nycflights13 packages. I made the rda files and README.md following the documentation of *nycflights13*.
+Thanks to nycflight13 [@nycflight13]. I made the rda files and README.md following the documentation of *nycflights13*.
 
 Packages used to produce this assignment are:
 
