@@ -279,17 +279,16 @@ e4 <-flights_NYtime %>%
   mutate(DepTime = paste0("2020-02-24 ",
                           substr(DepTime, 1, 2),
                           ":",
-                          substre4(DepTime, 3, 4))) %>%
+                          substr(DepTime, 3, 4))) %>%
   mutate(DepTime = ymd_hm(DepTime))
-
-#e4
 ```
 
 
 
 
 ```{r path_way}
-path_way <- bind_rows(pathtable(e4,1),pathtable(e4,2),pathtable(e4,3),pathtable(e4,4),pathtable(e4,5),pathtable(e4,6),pathtable(e4,7),pathtable(e4,8),pathtable(e4,9),pathtable(e4,10),pathtable(e4,11),pathtable(e4,12),pathtable(e4,13),pathtable(e4,14))
+path_way <- bind_rows(pathtable(e4,1),pathtable(e4,2),pathtable(e4,3),pathtable(e4,4),pathtable(e4,5),pathtable(e4,6),pathtable(e4,7),pathtable(e4,8),pathtable(e4,9),pathtable(e4,10),pathtable(e4,11),pathtable(e4,12),pathtable(e4,13),pathtable(e4,14)) %>%
+  arrange(DepTime)
 ```
 
 
@@ -402,7 +401,7 @@ my_planes <- raw_planes %>%
          aircraft_desc, # type
          mfr_y, # manufacturer
          model_y, # model
-         type, #engines in numeric
+         no_eng, #no of engines
          no_seats, #seats
          speed, #speed
          engine_desc) %>% #engine in char
@@ -412,7 +411,7 @@ my_planes <- raw_planes %>%
          type = aircraft_desc,
          manufacturer = mfr_y,
          model = model_y,
-         engines = type,
+         engines = no_eng,
          seats = no_seats,
          engine = engine_desc) %>%
   mutate(tailnum = paste0("N",tailnum)) %>%
@@ -420,7 +419,9 @@ my_planes <- raw_planes %>%
   mutate(year = as.integer(year),
          engines = as.integer(engines),
          seats = as.integer(seats),
-         speed = as.integer(speed))
+         speed = as.integer(speed)) %>%
+  filter(!is.na(type)) %>%
+  filter(!is.na(model)) 
 
 save(my_planes, file = here::here("data","my_planes.rda"))
 ```
